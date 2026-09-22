@@ -1,0 +1,10 @@
+# .spa-reconrc.example
+#
+# Copy to ./.spa-reconrc in the directory where you invoke spa-recon.
+# It is sourced as bash, so plain KEY="value" assignments work.
+
+# ---------- credentials (pick what your target uses) ----------
+# SPA_TOKEN="eyJhbGciOi..."
+# SPA_COOKIE="session=abc123; csrf=xyz"
+# SPA_BASIC="user:password"
+# SPA_HEADERS="X-Api-Key: deadbeef; X-Tenant: acme"

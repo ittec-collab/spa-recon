@@ -1,0 +1,178 @@
+# ============================================================
+# spa-recon — .gitignore
+# ============================================================
+
+# ------------------------------------------------------------
+# scan output directories
+#
+# spa-recon.sh writes everything into a target dir like
+# ./recon-v12 or ./spa-recon-20260923-123456. None of it should
+# be committed — it contains target-specific findings, JS bundles
+# from the target, and possibly captured tokens/cookies.
+# ------------------------------------------------------------
+recon-*/
+spa-recon-*/
+**/recon-*/
+**/spa-recon-*/
+
+# ------------------------------------------------------------
+# recon artifacts (in case a scan writes to the current dir)
+# ------------------------------------------------------------
+probe.tsv
+methods.tsv
+methods-valid.tsv
+methods.tsv.safe
+422-bodies.txt
+schema-hits.txt
+framework.txt
+SUMMARY.txt
+needs-auth.txt
+forbidden.txt
+wrong-method.txt
+server-errors.txt
+json-200.txt
+spa-catchall.txt
+paths.txt
+paths.clean.txt
+api-paths.txt
+ui-paths.txt
+urls.txt
+js-urls.txt
+katana-urls.txt
+method-targets.txt
+probe-authed.tsv
+.usage-pairs.tmp
+
+# ------------------------------------------------------------
+# reports
+# ------------------------------------------------------------
+report.html
+report.pdf
+*.report.html
+*.report.pdf
+
+# ------------------------------------------------------------
+# captured JS bundles + logs from a scan
+# ------------------------------------------------------------
+/js/
+/logs/
+**/js/
+**/logs/
+
+# ------------------------------------------------------------
+# sensitive: never commit credentials or session material
+# ------------------------------------------------------------
+.spa-reconrc
+.spa-reconrc.local
+*.token
+*.jwt
+token.txt
+cookies.txt
+
+# generic env files (any tool that reads them)
+.env
+.env.*
+!.env.example
+
+# ------------------------------------------------------------
+# Node.js — the AST resolver dependencies
+#
+# node_modules is installed per-user by install.sh; do not vendor.
+# package-lock.json is not committed either, since we have a
+# hand-maintained package.json inside $PREFIX/share/spa-recon/node.
+# ------------------------------------------------------------
+node_modules/
+package-lock.json
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.pnpm-debug.log*
+
+# if someone runs npm install in the repo root during development
+package.json
+!lib/package.json
+
+# ------------------------------------------------------------
+# Go — nothing to ignore
+#
+# go install puts binaries under $GOPATH/bin, outside the repo.
+# There is no go.mod / go.sum in this project.
+# ------------------------------------------------------------
+
+# ------------------------------------------------------------
+# shell / bash tooling
+# ------------------------------------------------------------
+*.swp
+*.swo
+*~
+.bash_history
+shellcheck-out.txt
+
+# ------------------------------------------------------------
+# editors
+# ------------------------------------------------------------
+.idea/
+.vscode/
+*.sublime-project
+*.sublime-workspace
+*.iml
+*.code-workspace
+
+# ------------------------------------------------------------
+# OS
+# ------------------------------------------------------------
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+Thumbs.db
+desktop.ini
+
+# ------------------------------------------------------------
+# Python (in case anyone wraps the tooling)
+# ------------------------------------------------------------
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+.pytest_cache/
+.mypy_cache/
+
+# ------------------------------------------------------------
+# local dev scratch
+# ------------------------------------------------------------
+/tmp/
+scratch/
+notes.txt
+TODO.md
+.notes/
+
+# ------------------------------------------------------------
+# CI / test output
+# ------------------------------------------------------------
+coverage/
+*.log
+!install.log
+test-output/
+
+# ------------------------------------------------------------
+# PDF rendering intermediates
+# ------------------------------------------------------------
+*.pdf.tmp
+chromium-profile/
+
+# ------------------------------------------------------------
+# package manager caches (rare, but if someone runs npm ci)
+# ------------------------------------------------------------
+.npm/
+.yarn/
+.yarnrc
+.yarnrc.yml
+
+# ------------------------------------------------------------
+# keep the resolver deps lockfile out of the repo
+# (installed per-machine by install.sh)
+# ------------------------------------------------------------
+$PREFIX/share/spa-recon/node/package-lock.json

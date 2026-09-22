@@ -1,0 +1,480 @@
+/* ============================================================
+   spa-recon report — stylesheet
+   ============================================================ */
+
+:root {
+  --bg:#0d1117; --panel:#161b22; --border:#30363d; --fg:#c9d1d9;
+  --muted:#8b949e; --accent:#58a6ff; --green:#3fb950; --yellow:#d29922;
+  --orange:#f0883e; --red:#f85149; --blue:#79c0ff; --code-bg:#0a0d12;
+}
+
+* { box-sizing: border-box; }
+
+html, body {
+  margin: 0;
+  padding: 0;
+  background: var(--bg);
+  color: var(--fg);
+  font: 14px/1.55 -apple-system, BlinkMacSystemFont, "Segoe UI", Ubuntu,
+        "Helvetica Neue", sans-serif;
+}
+
+.wrap { max-width: 1100px; margin: 0 auto; padding: 32px 24px 80px; }
+
+/* ============================================================
+   header
+   ============================================================ */
+
+header { border-bottom: 1px solid var(--border); padding-bottom: 20px; margin-bottom: 28px; }
+
+h1 { font-size: 24px; margin: 0 0 6px; letter-spacing: -0.01em; }
+h1 .tag { color: var(--accent); font-weight: 500; }
+
+.meta { color: var(--muted); font-size: 13px; }
+.meta span { margin-right: 16px; }
+
+/* ============================================================
+   headings
+   ============================================================ */
+
+h2 {
+  font-size: 17px;
+  margin: 36px 0 12px;
+  padding-bottom: 6px;
+  border-bottom: 1px solid var(--border);
+  letter-spacing: -0.01em;
+}
+
+h2 .badge {
+  background: var(--panel);
+  border: 1px solid var(--border);
+  color: var(--muted);
+  font-size: 12px;
+  padding: 1px 8px;
+  border-radius: 99px;
+  margin-left: 10px;
+  font-weight: 500;
+}
+
+p { margin: 8px 0; }
+
+/* ============================================================
+   code / pre
+   ============================================================ */
+
+code, pre, .url, .code, .ctype, .method {
+  font-family: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, monospace;
+}
+
+code {
+  background: var(--panel);
+  padding: 1px 6px;
+  border-radius: 4px;
+  font-size: 12.5px;
+}
+
+/* ============================================================
+   summary grid
+   ============================================================ */
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 12px;
+  margin: 16px 0 8px;
+}
+
+.stat {
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 14px 16px;
+}
+
+.stat .n { font-size: 24px; font-weight: 600; letter-spacing: -0.02em; }
+.stat .l { font-size: 12px; color: var(--muted); margin-top: 2px; }
+
+.stat.green  .n { color: var(--green); }
+.stat.yellow .n { color: var(--yellow); }
+.stat.orange .n { color: var(--orange); }
+.stat.red    .n { color: var(--red); }
+.stat.blue   .n { color: var(--blue); }
+
+/* ============================================================
+   tables
+   ============================================================ */
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 8px 0 0;
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+thead th {
+  background: #1c2128;
+  text-align: left;
+  padding: 9px 12px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  border-bottom: 1px solid var(--border);
+}
+
+tbody td {
+  padding: 7px 12px;
+  border-bottom: 1px solid #21262d;
+  vertical-align: top;
+  font-size: 13px;
+}
+
+tbody tr:last-child td { border-bottom: none; }
+tbody tr:hover { background: #1c2128; }
+
+.code { font-weight: 600; white-space: nowrap; width: 70px; }
+.code.s2xx { color: var(--green); }
+.code.s3xx { color: var(--blue); }
+.code.s4xx { color: var(--orange); }
+.code.s5xx { color: var(--red); }
+
+.ctype { color: var(--muted); white-space: nowrap; width: 180px; font-size: 12.5px; }
+.url { color: var(--fg); word-break: break-all; }
+
+/* ============================================================
+   method badges
+   ============================================================ */
+
+.method {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 4px;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  background: #21262d;
+  border: 1px solid var(--border);
+  min-width: 52px;
+  text-align: center;
+}
+
+.method.m-get  { color: var(--green);  border-color: #1f6f2c; background: #0d2818; }
+.method.m-post { color: var(--blue);   border-color: #1f4a7a; background: #0c1f33; }
+.method.m-put  { color: var(--yellow); border-color: #6e5514; background: #2a1f06; }
+.method.m-del  { color: var(--red);    border-color: #7a2321; background: #2b0e0d; }
+
+/* ============================================================
+   alerts / empty
+   ============================================================ */
+
+.alert {
+  padding: 12px 16px;
+  border-radius: 8px;
+  margin: 14px 0;
+  border: 1px solid var(--border);
+  background: var(--panel);
+}
+
+.alert.warn { border-color: #6e5514; background: #2a1f06; color: #f0c674; }
+
+.empty { color: var(--muted); font-style: italic; }
+
+/* ============================================================
+   endpoint list (auth-required, wrong-method, etc.)
+   ============================================================ */
+
+.endpoint-list {
+  list-style: none;
+  padding: 0;
+  margin: 8px 0 0;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(340px, 1fr));
+  gap: 6px;
+}
+
+.endpoint-list li {
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 6px 10px;
+  font-size: 12.5px;
+  word-break: break-all;
+}
+
+.endpoint-list code { background: transparent; padding: 0; color: var(--fg); }
+
+/* ============================================================
+   endpoint usage blocks
+   ============================================================ */
+
+.usage-block {
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 14px 16px;
+  margin: 14px 0;
+}
+
+.usage-head { margin-bottom: 6px; }
+
+.usage-path {
+  background: transparent;
+  padding: 0;
+  font-size: 13.5px;
+  color: var(--fg);
+  font-weight: 600;
+}
+
+.usage-note { color: var(--muted); font-size: 12.5px; margin: 4px 0 12px; }
+
+.usage-method-row { margin-top: 10px; }
+.usage-method-row .method { margin-bottom: 6px; }
+
+.usage-cmd {
+  background: var(--code-bg);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 10px 12px;
+  margin: 0;
+  overflow-x: auto;
+  font-size: 12.5px;
+  line-height: 1.6;
+}
+
+.usage-cmd code { background: transparent; padding: 0; color: var(--fg); white-space: pre; }
+
+/* ============================================================
+   field chips — required fields extracted from 422 responses
+   ============================================================ */
+
+.usage-fields {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  align-items: center;
+  margin: 6px 0 10px;
+}
+
+.usage-fields-label {
+  color: var(--muted);
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  font-weight: 600;
+  margin-right: 2px;
+}
+
+.usage-fields code {
+  background: #0c1f33;
+  border: 1px solid #1f4a7a;
+  color: var(--blue);
+  padding: 1px 8px;
+  border-radius: 99px;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+/* ============================================================
+   per-endpoint testing guide
+   ============================================================ */
+
+.usage-guide {
+  background: #131b23;
+  border-left: 3px solid var(--accent);
+  border-radius: 6px;
+  padding: 10px 12px;
+  margin: 8px 0 12px;
+}
+
+.usage-guide-title {
+  color: var(--accent);
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  font-weight: 600;
+  margin-bottom: 6px;
+}
+
+.usage-guide ul {
+  margin: 0;
+  padding: 0 0 0 18px;
+  list-style: none;
+}
+
+.usage-guide li {
+  font-size: 12.5px;
+  color: var(--fg);
+  margin: 4px 0;
+  padding-left: 0;
+  position: relative;
+  line-height: 1.5;
+}
+
+.usage-guide li::before {
+  content: "→";
+  position: absolute;
+  left: -16px;
+  color: var(--muted);
+}
+
+.usage-guide code {
+  background: var(--code-bg);
+  border: 1px solid var(--border);
+  padding: 0 4px;
+  border-radius: 3px;
+  font-size: 11.5px;
+}
+
+.usage-guide .finding {
+  color: var(--green);
+  font-weight: 600;
+}
+
+/* ============================================================
+   frontend call context (from JS bundle)
+   ============================================================ */
+
+.usage-ctx {
+  background: #0a0d12;
+  border: 1px dashed var(--border);
+  border-radius: 6px;
+  padding: 8px 10px;
+  margin: 6px 0 10px;
+}
+
+.usage-ctx summary {
+  cursor: pointer;
+  color: var(--blue);
+  font-size: 11.5px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.usage-ctx-body {
+  margin: 6px 0 0;
+  background: transparent;
+  padding: 0;
+  overflow-x: auto;
+}
+
+.usage-ctx-body code {
+  background: transparent;
+  padding: 0;
+  color: var(--fg);
+  font-size: 12px;
+  white-space: pre-wrap;
+  word-break: break-all;
+  line-height: 1.5;
+}
+
+/* ============================================================
+   raw 422 response
+   ============================================================ */
+
+.usage-422 {
+  background: #0a0d12;
+  border: 1px dashed #6e5514;
+  border-radius: 6px;
+  padding: 8px 10px;
+  margin: 8px 0 0;
+}
+
+.usage-422 summary {
+  cursor: pointer;
+  color: var(--yellow);
+  font-size: 11.5px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.usage-422-body {
+  margin: 6px 0 0;
+  background: transparent;
+  padding: 0;
+  overflow-x: auto;
+}
+
+.usage-422-body code {
+  background: transparent;
+  padding: 0;
+  color: #f0c674;
+  font-size: 12px;
+  white-space: pre-wrap;
+  word-break: break-all;
+  line-height: 1.5;
+}
+
+/* ============================================================
+   footer
+   ============================================================ */
+
+footer {
+  margin-top: 48px;
+  padding-top: 18px;
+  border-top: 1px solid var(--border);
+  color: var(--muted);
+  font-size: 12px;
+}
+
+/* ============================================================
+   print
+   ============================================================ */
+
+@media print {
+  :root {
+    --bg: #fff; --panel: #f6f8fa; --border: #d0d7de; --fg: #1f2328;
+    --muted: #59636e; --accent: #0969da; --green: #1a7f37; --yellow: #9a6700;
+    --orange: #bc4c00; --red: #cf222e; --blue: #0969da; --code-bg: #f6f8fa;
+  }
+
+  .wrap { max-width: none; padding: 0; }
+
+  tbody tr:hover { background: transparent; }
+
+  h2 { page-break-after: avoid; }
+
+  .stat, .usage-block { page-break-inside: avoid; }
+
+  table { page-break-inside: auto; overflow: visible; }
+  thead { display: table-header-group; }
+  tbody tr { page-break-inside: avoid; }
+
+  .usage-cmd { overflow-x: visible; }
+  .usage-cmd code { white-space: pre-wrap; word-break: break-all; }
+
+  .usage-ctx, .usage-422 { background: #f6f8fa; }
+  .usage-ctx-body code { color: #1f2328; }
+  .usage-422-body code { color: #9a6700; }
+
+  .usage-fields code {
+    background: #f0f6fc;
+    border-color: #b6d4f5;
+    color: #0550ae;
+  }
+
+  .usage-guide {
+    background: #f6f8fa;
+    border-left-color: #0969da;
+  }
+  .usage-guide .finding { color: #1a7f37; }
+  .usage-guide code { background: #fff; }
+
+  details { display: block; }
+  details > summary { list-style: none; }
+}
+.usage-fields-verb {
+  color: var(--yellow);
+  font-weight: 700;
+  margin-left: 4px;
+  padding: 0 4px;
+  background: #2a1f06;
+  border: 1px solid #6e5514;
+  border-radius: 3px;
+  font-size: 10.5px;
+}
