@@ -9,9 +9,9 @@
 # ./recon-v12 or ./spa-recon-20260923-123456. None of it should
 # be committed — it contains target-specific findings, JS bundles
 # from the target, and possibly captured tokens/cookies.
+#
+# `**/` covers the top level too, so no plain `recon-*/` needed.
 # ------------------------------------------------------------
-recon-*/
-spa-recon-*/
 **/recon-*/
 **/spa-recon-*/
 
@@ -19,9 +19,10 @@ spa-recon-*/
 # recon artifacts (in case a scan writes to the current dir)
 # ------------------------------------------------------------
 probe.tsv
+probe-authed.tsv
 methods.tsv
-methods-valid.tsv
 methods.tsv.safe
+methods-valid.tsv
 422-bodies.txt
 schema-hits.txt
 framework.txt
@@ -40,7 +41,6 @@ urls.txt
 js-urls.txt
 katana-urls.txt
 method-targets.txt
-probe-authed.tsv
 .usage-pairs.tmp
 
 # ------------------------------------------------------------
@@ -53,11 +53,11 @@ report.pdf
 
 # ------------------------------------------------------------
 # captured JS bundles + logs from a scan
+#
+# These live under recon-*/ which is already ignored above.
+# Do NOT add `**/js/` or `**/logs/` — they'd silently swallow
+# any source directory with those names anywhere in the tree.
 # ------------------------------------------------------------
-/js/
-/logs/
-**/js/
-**/logs/
 
 # ------------------------------------------------------------
 # sensitive: never commit credentials or session material
@@ -78,8 +78,9 @@ cookies.txt
 # Node.js — the AST resolver dependencies
 #
 # node_modules is installed per-user by install.sh; do not vendor.
-# package-lock.json is not committed either, since we have a
-# hand-maintained package.json inside $PREFIX/share/spa-recon/node.
+# The resolver's package.json / package-lock.json live in
+# $PREFIX/share/spa-recon/node/ after install — not in this repo.
+# CI installs its own deps with `npm install --no-save`.
 # ------------------------------------------------------------
 node_modules/
 package-lock.json
@@ -88,7 +89,9 @@ yarn-debug.log*
 yarn-error.log*
 .pnpm-debug.log*
 
-# if someone runs npm install in the repo root during development
+# root package.json is only ever created by a stray `npm install`
+# in the repo root during development; the real one lives under
+# lib/ (or under $PREFIX after install).
 package.json
 !lib/package.json
 
@@ -164,15 +167,9 @@ test-output/
 chromium-profile/
 
 # ------------------------------------------------------------
-# package manager caches (rare, but if someone runs npm ci)
+# package manager caches
 # ------------------------------------------------------------
 .npm/
 .yarn/
 .yarnrc
 .yarnrc.yml
-
-# ------------------------------------------------------------
-# keep the resolver deps lockfile out of the repo
-# (installed per-machine by install.sh)
-# ------------------------------------------------------------
-$PREFIX/share/spa-recon/node/package-lock.json
