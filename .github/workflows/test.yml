@@ -4,29 +4,42 @@ on:
     branches: [main]
   pull_request:
 
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
+  shellcheck:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - name: shellcheck
+        run: make lint
+
   test:
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     steps:
       - uses: actions/checkout@v4
 
       - uses: actions/setup-node@v4
         with:
           node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: package.json
 
       - name: install Node deps for tests
         run: npm install --no-save @babel/core @babel/parser
 
       - name: unit tests
         env:
+          NODE_PATH: ${{ github.workspace }}/node_modules
           SPA_RECON_NODE_MODULES: ${{ github.workspace }}/node_modules
-        run: make test-resolver 
+        run: make test-resolver
 
       - name: smoke test
         run: make test-smoke
-
-      - name: shellcheck
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y shellcheck
-          make lint 
