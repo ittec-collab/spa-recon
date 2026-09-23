@@ -143,7 +143,7 @@ test-resolver:
 # ------------------------------------------------------------
 lint:
 	@command -v shellcheck >/dev/null || { echo "install shellcheck"; exit 1; }
-	shellcheck spa-recon.sh spa-report.sh lib/*.sh
+	shellcheck -S error spa-recon.sh spa-report.sh lib/*.sh
 
 fmt:
 	@command -v shfmt >/dev/null || { echo "install shfmt"; exit 1; }

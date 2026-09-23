@@ -18,6 +18,8 @@ jobs:
         run: npm install --no-save @babel/core @babel/parser
 
       - name: unit tests
+        env:
+          SPA_RECON_NODE_MODULES: ${{ github.workspace }}/node_modules
         run: make test-resolver
 
       - name: smoke test
