@@ -321,11 +321,13 @@ render_report() {
 
   local spa_warn=""
   if grep -q 'html' <<< "$catchall"; then
+    # shellcheck disable=SC2089  # literal HTML, quotes are intentional
     spa_warn='<div class="alert warn"><strong>SPA catch-all detected.</strong> Every path returning <code>200 text/html</code> is the SPA router serving <code>index.html</code>, not a real endpoint. Only JSON and non-200 responses indicate actual routes.</div>'
   fi
 
   local auth_note=""
   if [ -s "$recon_dir/needs-auth.txt" ] && [ ! -f "$recon_dir/probe-authed.tsv" ]; then
+    # shellcheck disable=SC2089  # literal HTML, quotes are intentional
     auth_note='<div class="alert warn"><strong>Anonymous scan.</strong> Field chips below are inferred from the JS bundle or from the endpoint path. Re-run <code>spa-recon.sh</code> with <code>--token</code> or <code>--cookie</code> to capture the exact validation shapes from authenticated 422 responses.</div>'
   fi
 
@@ -375,6 +377,7 @@ render_report() {
   RPT_N_SCHEMA="$n_schema"
   RPT_CSS="$(< "$tpl_dir/report.css")"
 
+# shellcheck disable=SC2090  # literal HTML, quotes are intentional
   export RPT_SPA_WARN RPT_AUTH_NOTE RPT_USAGE_SECTION RPT_METHODS_TABLE RPT_PROBE_TABLE
   export RPT_AUTH_LIST RPT_WRONG_METHOD_LIST RPT_FORBIDDEN_LIST RPT_SERVER_ERRORS_LIST
   export RPT_SCHEMA_LIST RPT_CATCHALL RPT_BASE_URL RPT_FRAMEWORK RPT_GEN_TIME RPT_HOST

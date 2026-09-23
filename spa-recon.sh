@@ -6,7 +6,8 @@
 
 set -uo pipefail
 
-readonly SCRIPT_NAME="$(basename "$0")"
+SCRIPT_NAME="$(basename "$0")"
+readonly SCRIPT_NAME
 readonly SCRIPT_VERSION="2.1.1"
 
 SELF_DIR="$(cd "$(dirname "$(realpath "$0")")" && pwd)"
@@ -93,6 +94,7 @@ SPA_COOKIE="${CLI_COOKIE:-${SPA_COOKIE:-}}"
 SPA_BASIC="${CLI_BASIC:-${SPA_BASIC:-}}"
 if [ ${#CLI_HEADERS[@]} -gt 0 ]; then
   SPA_HEADERS="$(IFS=';'; echo "${CLI_HEADERS[*]}")"
+export SPA_HEADERS
 fi
 
 # Export every flag so run_recon sees them regardless of caller

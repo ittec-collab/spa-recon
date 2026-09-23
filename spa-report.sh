@@ -6,7 +6,8 @@
 
 set -uo pipefail
 
-readonly SCRIPT_NAME="$(basename "$0")"
+SCRIPT_NAME="$(basename "$0")"
+readonly SCRIPT_NAME
 readonly SCRIPT_VERSION="2.1.0"
 
 SELF_DIR="$(cd "$(dirname "$(realpath "$0")")" && pwd)"
