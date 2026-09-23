@@ -19,7 +19,6 @@ function run(code, fragment) {
   }
 }
 
-// ۱. الگوی مستقیم
 test('direct object', () => {
   assert.deepEqual(
     run(`fetch("/x", {body: JSON.stringify({a:1,b:2})});`, '/x'),
@@ -27,7 +26,6 @@ test('direct object', () => {
   );
 });
 
-// ۲. wrapper سفارشی — چیزی که همه ابزارهای دیگه رد میکنن
 test('custom wrapper', () => {
   assert.deepEqual(
     run(`Qb("POST", "/x", {name:1, email:2});`, '/x'),
@@ -35,7 +33,6 @@ test('custom wrapper', () => {
   );
 });
 
-// ۳. تابع محلی
 test('local function', () => {
   assert.deepEqual(
     run(`function build(f){return {title:f.t, priority:f.p};}
@@ -44,7 +41,6 @@ test('local function', () => {
   );
 });
 
-// ۴. spread
 test('spread', () => {
   assert.deepEqual(
     run(`const base={a:1,b:2}; fetch("/x", {body: JSON.stringify({...base, c:3})});`, '/x'),
@@ -52,14 +48,12 @@ test('spread', () => {
   );
 });
 
-// ۵. boundary — مهمترین تست
 test('does not match subpath', () => {
   const src = `Qb("POST", "/api/v1/my-projects/generate", {name:1, db:2});`;
-  assert.deepEqual(run(src, '/api/v1/my-projects'), []);     // ← باید خالی
+  assert.deepEqual(run(src, '/api/v1/my-projects'), []);
   assert.deepEqual(run(src, '/api/v1/my-projects/generate'), ['db','name']);
 });
 
-// ۶. route map رد بشه
 test('route map is rejected', () => {
   const src = `const r={a:"/api/a",b:"/api/b",c:"/api/c"};`;
   assert.deepEqual(run(src, '/api/b'), []);
