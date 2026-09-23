@@ -13,13 +13,6 @@ readonly _SPA_FIELDS_LOADED=1
 
 # ============================================================
 # locating the AST resolver + its node_modules
-#
-# Search order:
-#   1. next to this file (development checkout)
-#   2. $PREFIX/share/spa-recon/lib (installed)
-#   3. ~/.local/share/spa-recon/lib
-#   4. /usr/local/share/spa-recon/lib
-#   5. /usr/share/spa-recon/lib
 # ============================================================
 _find_resolver() {
   local self_dir
@@ -115,8 +108,7 @@ extract_422_fields() {
 # ============================================================
 # Tier 2 — fields from the JS bundle
 #
-# Preferred: Node + @babel/core AST resolver (catches wrappers,
-#            local function calls, spread, JSON.stringify).
+# Preferred: Node + @babel/core AST resolver
 # Fallback:  regex on a 1200-byte window around the URL.
 # ============================================================
 extract_fields_from_js() {
@@ -131,13 +123,17 @@ extract_fields_from_js() {
   if command -v node >/dev/null 2>&1; then
     local resolver modules
     if resolver="$(_find_resolver)" && [ -n "$resolver" ]; then
-      modules="$(_find_node_modules 2>/dev/null)" || modules=""
+      modules="$(_find_node_modules 2>/dev/null || true)"
 
       local f out
       for f in "$js_dir"/*.js; do
         [ -f "$f" ] || continue
         grep -qF "$search" "$f" 2>/dev/null || continue
-        out=$(node "$resolver" "$f" "$search" 2>/dev/null)
+        if [ -n "$modules" ]; then
+          out=$(NODE_PATH="$modules" node "$resolver" "$f" "$search" 2>/dev/null || true)
+        else
+          out=$(node "$resolver" "$f" "$search" 2>/dev/null || true)
+        fi
         if [ -n "$out" ]; then
           printf '%s\n' "$out"
           return 0
@@ -159,7 +155,7 @@ extract_fields_from_js_regex() {
   local search="${path%%\$\{*}"
   [ ${#search} -lt 10 ] && return 0
 
-  local f offset
+  local f="" offset
   for f in "$js_dir"/*.js; do
     [ -f "$f" ] || continue
     offset=$(grep -aboF "$search" "$f" 2>/dev/null | head -1 | cut -d: -f1)
@@ -176,6 +172,7 @@ extract_fields_from_js_regex() {
 
   # reject route-map chunks: >1 URL means a route table, not a call site
   local url_count
+  # shellcheck disable=SC2016  # regex, ${} is literal here
   url_count=$(printf '%s' "$chunk" \
     | grep -oE '"/[a-zA-Z0-9_./?&=${}-]{4,}"' | wc -l)
   [ "$url_count" -gt 1 ] && return 0
@@ -205,7 +202,7 @@ extract_fields_from_js_regex() {
 infer_fields_from_path() {
   local verb="$1" path="$2"
   local low
-  low="$(printf '%s' "$path" | tr 'A-Z' 'a-z')"
+  low="$(printf '%s' "$path" | tr '[:upper:]' '[:lower:]')"
 
   case "$verb" in
     GET|DELETE) return ;;
@@ -321,42 +318,54 @@ resolve_fields() {
 
 # ============================================================
 # Example values — driven by field name
+#
+# Order matters in `case`: exact matches first, then prefix/suffix
+# globs, then substring globs (most generic last).
 # ============================================================
 example_value() {
   local name="$1"
   local low
-  low="$(printf '%s' "$name" | tr 'A-Z' 'a-z')"
+  low="$(printf '%s' "$name" | tr '[:upper:]' '[:lower:]')"
 
   case "$low" in
-    email|e-mail|mail)                    printf 'you@example.com' ;;
-    *email*)                              printf 'you@example.com' ;;
-    username|user|login|handle)           printf 'testuser' ;;
-    *password*|passwd|pass)               printf 'Passw0rd!' ;;
-    confirm*|*_confirm|repeat*)           printf 'Passw0rd!' ;;
-    name|full_name|display_name)          printf 'Test User' ;;
-    first_name|firstname)                 printf 'Test' ;;
-    last_name|lastname|surname)           printf 'User' ;;
-    phone|phone_number|mobile)            printf '+15555550100' ;;
-    *token*|*code*|otp|verification_code) printf '123456' ;;
-    *amount*|*price*|*cost*)              printf '1.00' ;;
-    *quantity*|*count*|*number*)          printf '1' ;;
-    *url*|*uri*|*link*|*callback*|*href*) printf 'https://example.com' ;;
-    *id|id_*|*_id)                        printf '1' ;;
-    *enabled|is_*|has_*)                  printf 'true' ;;
-    title|subject|summary|label)          printf 'Test Title' ;;
-    body|content|message|text|description|note) printf 'Test message' ;;
-    address|street)                       printf '123 Test St' ;;
-    city)                                 printf 'Springfield' ;;
-    country|country_code)                 printf 'US' ;;
-    zip|postal_code)                      printf '12345' ;;
-    date|*_at|*_date|*_time)              printf '2026-01-01T00:00:00Z' ;;
-    role|type|kind|category|status)       printf 'test' ;;
-    slug|key|alias)                       printf 'test-slug' ;;
-    config|metadata|payload|data)         printf '{}' ;;
-    tags|labels)                          printf 'test' ;;
-    file|attachment)                      printf '@/tmp/test.txt' ;;
-    secret|api_key|apikey|client_secret)  printf 'redacted-secret' ;;
-    *)                                    printf 'value' ;;
+    # --- exact matches ---
+    email|e-mail|mail)                            printf 'you@example.com' ;;
+    username|user|login|handle)                   printf 'testuser' ;;
+    name|full_name|display_name)                  printf 'Test User' ;;
+    first_name|firstname)                         printf 'Test' ;;
+    last_name|lastname|surname)                   printf 'User' ;;
+    phone|phone_number|mobile)                    printf '+15555550100' ;;
+    country|country_code)                         printf 'US' ;;
+    city)                                         printf 'Springfield' ;;
+    zip|postal_code)                              printf '12345' ;;
+    address|street)                               printf '123 Test St' ;;
+    title|subject|summary|label)                  printf 'Test Title' ;;
+    body|content|message|text|description|note)   printf 'Test message' ;;
+    role|type|kind|category|status)               printf 'test' ;;
+    slug|key|alias)                               printf 'test-slug' ;;
+    config|metadata|payload|data)                 printf '{}' ;;
+    tags|labels)                                  printf 'test' ;;
+    file|attachment)                              printf '@/tmp/test.txt' ;;
+    secret|api_key|apikey|client_secret)          printf 'redacted-secret' ;;
+    password|passwd|pass)                         printf 'Passw0rd!' ;;
+    otp|verification_code)                        printf '123456' ;;
+    id)                                           printf '1' ;;
+
+    # --- prefix / suffix patterns ---
+    confirm*|*_confirm|repeat*)                   printf 'Passw0rd!' ;;
+    id_*|*_id)                                    printf '1' ;;
+    is_*|has_*|*enabled)                          printf 'true' ;;
+    *_at|*_date|*_time)                           printf '2026-01-01T00:00:00Z' ;;
+
+    # --- substring patterns (order matters) ---
+    *email*)                                      printf 'you@example.com' ;;
+    *password*)                                   printf 'Passw0rd!' ;;
+    *zip*|*postal*)                               printf '12345' ;;
+    *amount*|*price*|*cost*)                      printf '1.00' ;;
+    *quantity*|*count*|*number*)                  printf '1' ;;
+    *url*|*uri*|*link*|*callback*|*href*)         printf 'https://example.com' ;;
+    *token*|*code*)                               printf '123456' ;;
+    *)                                            printf 'value' ;;
   esac
 }
 

@@ -84,6 +84,7 @@ extract_js_context() {
       | tr '\n\r\t' '   ' \
       | sed -E 's/ {2,}/ /g; s/^ +//; s/ +$//')
 
+    # shellcheck disable=SC2016  # regex, \$http / \$\.ajax are literal
     if printf '%s' "$snippet" | grep -qE '(fetch\(|axios|\.post\(|\.get\(|\.patch\(|\.put\(|\.delete\(|method:|body:|data:|JSON\.stringify|\$http|\$\.ajax)'; then
       printf '%s' "$snippet"
       return 0
@@ -97,7 +98,12 @@ extract_js_context() {
 curl_snippet() {
   local verb="$1" url="$2" path="$3" recon_dir="$4" base_url="$5"
   local auth_hdr=""
-  needs_auth_for "$verb" "$path" && auth_hdr=' -H "Authorization: Bearer $TOKEN"'
+  if needs_auth_for "$verb" "$path"; then
+    # NOTE: $TOKEN is intentionally literal — the user is expected
+    # to substitute it when they paste the command.
+    # shellcheck disable=SC2016
+    auth_hdr=' -H "Authorization: Bearer $TOKEN"'
+  fi
 
   case "$verb" in
     GET|DELETE)
@@ -151,7 +157,7 @@ render_usage_section() {
   local current_url="" current_path=""
   while IFS=$'\t' read -r url verb; do
     [ -z "$url" ] && continue
-    local path="${url#$base_url}"
+    local path="${url#"$base_url"}"
 
     if [ "$url" != "$current_url" ]; then
       [ -n "$current_url" ] && printf '</div>\n'
@@ -166,6 +172,7 @@ render_usage_section() {
 
       # Chips for whichever write verb carries a body
       local chip_verb="" chip_fields=""
+      local v
       for v in POST PUT PATCH; do
         local st="${METHOD_STATUS[$v $current_path]:-}"
         [ -z "$st" ] && continue
@@ -265,6 +272,7 @@ render_report() {
   self_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 
   local tpl_dir=""
+  local d
   for d in "${SPA_REPORT_TPL_DIR:-}" "$self_dir/templates" "$PWD/templates" "$PWD"; do
     if [ -n "$d" ] && [ -f "$d/report.html" ] && [ -f "$d/report.css" ]; then
       tpl_dir="$d"
@@ -335,38 +343,44 @@ render_report() {
   server_errors_list="$(render_list "$recon_dir/server-errors.txt")"
   schema_list="$(render_list "$recon_dir/schema-hits.txt")"
 
-  # Export for perl
-  export RPT_SPA_WARN="$spa_warn"
-  export RPT_AUTH_NOTE="$auth_note"
-  export RPT_USAGE_SECTION="$usage_section"
-  export RPT_METHODS_TABLE="$methods_table"
-  export RPT_PROBE_TABLE="$probe_table"
-  export RPT_AUTH_LIST="$auth_list"
-  export RPT_WRONG_METHOD_LIST="$wrong_method_list"
-  export RPT_FORBIDDEN_LIST="$forbidden_list"
-  export RPT_SERVER_ERRORS_LIST="$server_errors_list"
-  export RPT_SCHEMA_LIST="$schema_list"
-  export RPT_CATCHALL="$(esc "$catchall")"
-  export RPT_BASE_URL="$(esc "$base_url")"
-  export RPT_FRAMEWORK="$(esc "$framework")"
-  export RPT_GEN_TIME="$(esc "$gen_time")"
-  export RPT_HOST="$(esc "$hostname_")"
-  export RPT_RECON_DIR="$(esc "$recon_dir")"
-  export RPT_SCRIPT_NAME="spa-report.sh"
-  export RPT_JS_COUNT="$js_count"
-  export RPT_PATH_COUNT="$path_count"
-  export RPT_API_COUNT="$api_count"
-  export RPT_UI_COUNT="$ui_count"
-  export RPT_N_AUTH="$n_auth"
-  export RPT_N_FORBID="$n_forbid"
-  export RPT_N_405="$n_405"
-  export RPT_N_5XX="$n_5xx"
-  export RPT_N_JSON="$n_json"
-  export RPT_N_SPA="$n_spa"
-  export RPT_N_VALIDM="$n_validm"
-  export RPT_N_SCHEMA="$n_schema"
+  # Export for perl — separate declare and assign to keep shellcheck happy.
+  RPT_SPA_WARN="$spa_warn"
+  RPT_AUTH_NOTE="$auth_note"
+  RPT_USAGE_SECTION="$usage_section"
+  RPT_METHODS_TABLE="$methods_table"
+  RPT_PROBE_TABLE="$probe_table"
+  RPT_AUTH_LIST="$auth_list"
+  RPT_WRONG_METHOD_LIST="$wrong_method_list"
+  RPT_FORBIDDEN_LIST="$forbidden_list"
+  RPT_SERVER_ERRORS_LIST="$server_errors_list"
+  RPT_SCHEMA_LIST="$schema_list"
+  RPT_CATCHALL="$(esc "$catchall")"
+  RPT_BASE_URL="$(esc "$base_url")"
+  RPT_FRAMEWORK="$(esc "$framework")"
+  RPT_GEN_TIME="$(esc "$gen_time")"
+  RPT_HOST="$(esc "$hostname_")"
+  RPT_RECON_DIR="$(esc "$recon_dir")"
+  RPT_SCRIPT_NAME="spa-report.sh"
+  RPT_JS_COUNT="$js_count"
+  RPT_PATH_COUNT="$path_count"
+  RPT_API_COUNT="$api_count"
+  RPT_UI_COUNT="$ui_count"
+  RPT_N_AUTH="$n_auth"
+  RPT_N_FORBID="$n_forbid"
+  RPT_N_405="$n_405"
+  RPT_N_5XX="$n_5xx"
+  RPT_N_JSON="$n_json"
+  RPT_N_SPA="$n_spa"
+  RPT_N_VALIDM="$n_validm"
+  RPT_N_SCHEMA="$n_schema"
+  RPT_CSS="$(< "$tpl_dir/report.css")"
 
-  export RPT_CSS="$(< "$tpl_dir/report.css")"
+  export RPT_SPA_WARN RPT_AUTH_NOTE RPT_USAGE_SECTION RPT_METHODS_TABLE RPT_PROBE_TABLE
+  export RPT_AUTH_LIST RPT_WRONG_METHOD_LIST RPT_FORBIDDEN_LIST RPT_SERVER_ERRORS_LIST
+  export RPT_SCHEMA_LIST RPT_CATCHALL RPT_BASE_URL RPT_FRAMEWORK RPT_GEN_TIME RPT_HOST
+  export RPT_RECON_DIR RPT_SCRIPT_NAME RPT_JS_COUNT RPT_PATH_COUNT RPT_API_COUNT
+  export RPT_UI_COUNT RPT_N_AUTH RPT_N_FORBID RPT_N_405 RPT_N_5XX RPT_N_JSON
+  export RPT_N_SPA RPT_N_VALIDM RPT_N_SCHEMA RPT_CSS
 
   # Fill and write
   log "writing HTML report → $out_html"
@@ -378,6 +392,7 @@ render_report() {
   if [ "$want_pdf" = "1" ]; then
     local pdf="${out_html%.html}.pdf"
     local renderer=""
+    local c
     for c in chromium chromium-browser google-chrome google-chrome-stable; do
       command -v "$c" >/dev/null 2>&1 && { renderer="$c"; break; }
     done
@@ -395,12 +410,18 @@ render_report() {
       fi
     elif command -v wkhtmltopdf >/dev/null 2>&1; then
       log "rendering PDF with wkhtmltopdf"
-      wkhtmltopdf --enable-local-file-access "$out_html" "$pdf" >/dev/null 2>&1 \
-        && ok "wrote: $pdf" || warn "PDF conversion failed"
+      if wkhtmltopdf --enable-local-file-access "$out_html" "$pdf" >/dev/null 2>&1; then
+        ok "wrote: $pdf"
+      else
+        warn "PDF conversion failed"
+      fi
     elif command -v weasyprint >/dev/null 2>&1; then
       log "rendering PDF with weasyprint"
-      weasyprint "$out_html" "$pdf" >/dev/null 2>&1 \
-        && ok "wrote: $pdf" || warn "PDF conversion failed"
+      if weasyprint "$out_html" "$pdf" >/dev/null 2>&1; then
+        ok "wrote: $pdf"
+      else
+        warn "PDF conversion failed"
+      fi
     else
       warn "no PDF renderer found — install chromium, wkhtmltopdf, or weasyprint"
     fi

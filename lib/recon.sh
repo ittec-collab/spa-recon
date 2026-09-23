@@ -53,11 +53,6 @@ detect_framework() {
 
 # ============================================================
 # url normalization
-#
-# Katana emits absolute URLs (http://host/path). The HTML-scrape
-# fallback emits relative paths (/path) or protocol-relative (//host).
-# Deduplicate by prefixing relative forms with $BASE so both forms
-# of the same URL collapse to one line under `sort -u`.
 # ============================================================
 normalize_urls() {
   local base="$1"
@@ -83,8 +78,6 @@ run_recon() {
 
   mkdir -p "$OUT"/{js,logs}
 
-  local SELF_DIR
-  SELF_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
   local GOPATH_BIN
   GOPATH_BIN="$(go env GOPATH 2>/dev/null || echo "$HOME/go")/bin"
   local JSLUICE="$GOPATH_BIN/jsluice"
@@ -176,15 +169,12 @@ run_recon() {
   grep -oE '(src|href)="[^"]+"' "$OUT/logs/root.html" 2>/dev/null \
     | sed -E 's/^(src|href)="//; s/"$//' >> "$OUT/logs/katana-all.txt" || true
 
-  # Normalize the merged list — relative paths get $BASE prefixed so
-  # the HTML-extracted form dedupes against katana's absolute form.
+  # Normalize the merged list
   normalize_urls "$BASE" < "$OUT/logs/katana-all.txt" \
     | sort -u > "$OUT/logs/katana-all.txt.norm"
   mv "$OUT/logs/katana-all.txt.norm" "$OUT/logs/katana-all.txt"
 
   # Split JS assets from live URLs.
-  # The `grep -vE '\$'` drops template-literal fragments
-  # (e.g. bare `/$`) that would otherwise inflate the count.
   grep -E '\.js($|\?|#)' "$OUT/logs/katana-all.txt" 2>/dev/null \
     | grep -vE '\$' \
     | sed 's/[?#].*//' | sort -u > "$OUT/js-urls.txt"
@@ -251,17 +241,19 @@ run_recon() {
   local f
   for f in "$OUT"/js/*.js; do
     [ -f "$f" ] || continue
-    grep -oE '"/[a-zA-Z0-9_./{}:$@~-]+"' "$f" 2>/dev/null | tr -d '"' >> "$OUT/paths.txt"
-    grep -oE "'/[a-zA-Z0-9_./{}:$@~-]+'" "$f" 2>/dev/null | tr -d "'" >> "$OUT/paths.txt"
-    grep -oE '`/[a-zA-Z0-9_./{}:$@~-]+`' "$f" 2>/dev/null | tr -d '`' >> "$OUT/paths.txt"
+    {
+      # NOTE: the `\$` in the third pattern is required — inside double
+      # quotes it must be escaped so bash doesn't treat `$@` as an array.
+      grep -oE '"/[a-zA-Z0-9_./{}:$@~-]+"' "$f" 2>/dev/null | tr -d '"'
+      grep -oE "'/[a-zA-Z0-9_./{}:\$@~-]+'" "$f" 2>/dev/null | tr -d "'"
+      # shellcheck disable=SC2016  # regex, $ and {} are literal
+      grep -oE '`/[a-zA-Z0-9_./{}:$@~-]+`' "$f" 2>/dev/null | tr -d '`'
+    } >> "$OUT/paths.txt"
   done
 
   # ---------- 7. clean + classify ----------
   log "cleaning path list"
 
-  # `grep -vE '\$$'` drops any path ending in a dollar sign —
-  # those come from JS template literals like `/${var}` where the
-  # variable name was stripped, leaving a bare `/$` fragment.
   sed 's/[?#].*//' "$OUT/paths.txt" \
     | grep -E '^/' \
     | grep -vE '\$\{|%7B|\.\.' \
@@ -321,7 +313,8 @@ run_recon() {
 
   # ---------- 10. SPA catch-all check ----------
   log "verifying SPA catch-all behavior"
-  local random_path="$BASE/__spa-recon-$(date +%s%N)"
+  local random_path
+  random_path="$BASE/__spa-recon-$(date +%s%N)"
   local rand_code rand_type
   read -r rand_code rand_type < <(
     curl -s -o /dev/null -m 10 -A "$UA" "${AUTH[@]}" \
@@ -370,12 +363,14 @@ run_recon() {
     | awk -F'\t' '{print $1"\t"$3}' | sort -u \
     | while IFS=$'\t' read -r verb url; do
         [ -z "$url" ] && continue
-        printf '=== %s %s ===\n' "$verb" "$url" >> "$OUT/422-bodies.txt"
-        curl -s -X "$verb" \
-          -A "$UA" "${AUTH[@]}" \
-          -H 'Content-Type: application/json' \
-          -d '{}' -m 10 "$url" >> "$OUT/422-bodies.txt" 2>&1
-        printf '\n\n' >> "$OUT/422-bodies.txt"
+        {
+          printf '=== %s %s ===\n' "$verb" "$url"
+          curl -s -X "$verb" \
+            -A "$UA" "${AUTH[@]}" \
+            -H 'Content-Type: application/json' \
+            -d '{}' -m 10 "$url" 2>&1
+          printf '\n\n'
+        } >> "$OUT/422-bodies.txt"
       done
 
   local count_422
@@ -405,9 +400,12 @@ run_recon() {
       printf '%s %s\t%s\n' "$code" "$ctype" "$path" | tee -a "$OUT/schema-hits.txt"
     fi
   done
-  [ -s "$OUT/schema-hits.txt" ] \
-    && warn "real schema/doc endpoints found" \
-    || ok "no real schema endpoints (all 200s were SPA fallback)"
+
+  if [ -s "$OUT/schema-hits.txt" ]; then
+    warn "real schema/doc endpoints found"
+  else
+    ok "no real schema endpoints (all 200s were SPA fallback)"
+  fi
 
   # ---------- 14. authenticated re-probe summary ----------
   if [ ${#AUTH[@]} -gt 0 ] && [ -s "$OUT/needs-auth.txt" ]; then

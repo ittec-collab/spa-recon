@@ -15,20 +15,20 @@ declare -A FORM_CACHE=()
 build_auth_maps() {
   local recon_dir="$1"
   local base_url="$2"
-  local url verb code p
+  local url verb code p f
 
   for f in "$recon_dir/needs-auth.txt" "$recon_dir/forbidden.txt"; do
     [ -s "$f" ] || continue
     while read -r url; do
       [ -z "$url" ] && continue
-      AUTH_PATHS["${url#$base_url}"]=1
+      AUTH_PATHS["${url#"$base_url"}"]=1
     done < "$f"
   done
 
   if [ -s "$recon_dir/methods.tsv" ]; then
     while IFS=$'\t' read -r verb code url; do
       [ -z "$url" ] && continue
-      p="${url#$base_url}"
+      p="${url#"$base_url"}"
       METHOD_STATUS["$verb $p"]="$code"
       case "$code" in
         401|403) AUTH_PATHS["$p"]=1 ;;
@@ -71,7 +71,7 @@ is_form_endpoint() {
   fi
 
   local low
-  low="$(printf '%s' "$path" | tr 'A-Z' 'a-z')"
+  low="$(printf '%s' "$path" | tr '[:upper:]' '[:lower:]')"
   if [[ "$low" =~ (^|/)(login|signin|sign-in|authenticate|oauth/token|token)(/|$) ]]; then
     FORM_CACHE["$path"]=1
     return 0
