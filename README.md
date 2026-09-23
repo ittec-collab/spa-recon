@@ -72,7 +72,7 @@ constitutes a finding.
 ## Install
 
 ```bash
-git clone https://github.com/<you>/spa-recon.git
+git clone https://github.com/ittec-collab/spa-recon
 cd spa-recon
 ./install.sh
 ```
